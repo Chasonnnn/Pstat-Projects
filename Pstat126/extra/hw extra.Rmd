@@ -1,0 +1,220 @@
+---
+title: "extra homework"
+author: "Haocheng Zhang"
+date: "2023-03-23"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+## Load the dataset 'cars'
+cars <- read.table(file='cars.txt', head=T)
+```
+
+```{r}
+## Q(1) # Remove every fifth observation for use as a test sample. 
+test_sample <- cars[seq(5, nrow(cars), by=5),]
+
+# And the remaining data will be used as a training sample for futher use:
+training_sample <- cars[-seq(5, nrow(cars), by=5),]
+```
+
+```{r}
+## Q(2) To perform an exploratory analysis, we first use 'summary()' function
+#for an overall analysis.
+summary(training_sample)
+
+# 1.The average miles per gallon (mpg) for the training dataset is 20.07, 
+#with a minimum of 10.4 and a maximum of 32.4.
+# 2.Most cars in the dataset have 6 or 8 cylinders, with a mean of 6.077.
+# 3.The average displacement (disp) is 221.8, with a minimum of 75.7 
+#and a maximum of 460.
+# 4.The average horsepower (hp) is 145.2, ranging from 52 to 335.
+# 5.The average rear axle ratio (drat) is 3.622, ranging from 2.76 to 4.93.
+# 6.The average weight (wt) is 3.168, with a minimum of 1.513 
+#and a maximum of 5.424.
+# 7.The average quarter mile time (qsec) is 17.9, ranging from 14.5 to 22.9.
+# 8.The vs, am, and gear variables are categorical with binary (0 or 1) 
+#or ordinal (3, 4, or 5) values.
+# 9.The average number of carburetors (carb) is 2.731, ranging from 1 to 8.
+
+# Then calculate the correlation matrix to understand the relationships 
+#between numeric variables(Exclude the 'name' column).
+cor_matrix <- cor(training_sample[,-1])
+print(cor_matrix)
+
+# 1.mpg has a strong negative correlation with cyl (-0.878), disp (-0.888), 
+#and wt (-0.859), indicating that as the number of cylinders, 
+#engine displacement, and weight increase, the miles per gallon decreases.
+# 2.mpg has a positive correlation with drat (0.661) and vs (0.678), 
+#suggesting that higher rear axle ratios and V/S values are associated 
+#with higher fuel efficiency.
+# 3.cyl, disp, and wt are positively correlated with each other, 
+#indicating that cars with more cylinders, larger engine displacements, 
+#and heavier weights tend to have similar characteristics.
+# 4.drat is positively correlated with am (0.723) and gear (0.708), 
+#indicating that cars with higher rear axle ratios tend to have manual 
+#transmissions and more forward gears.
+# 5.hp has a strong positive correlation with carb (0.808), suggesting that 
+#cars with higher horsepower tend to have more carburetors.
+
+# Also, we could Create scatter plots to visualize relationships between 
+#the response variable (mpg) and the predictor variables. 
+# Load the ggplot2 library for better visualizations
+library(ggplot2)
+
+# Create a scatterplot matrix
+pairs(training_sample[,-1],
+      lower.panel = function(x, y) {
+        points(x, y, pch = 19, cex = 0.5)
+      },
+      upper.panel = function(x, y) {
+        text(0.5, 0.5, round(cor(x, y), 2), cex = 0.5)
+      },
+      diag.panel = NULL)
+```
+
+```{r}
+## Q(3)
+# FIrst, fit the full model: Begin by fitting a multiple linear regression 
+#model using all the predictor variables (except 'name') to predict the 
+#response variable 'mpg'.
+full_model <- lm(mpg ~ . - name, data = training_sample)
+summary(full_model)
+
+# From the output above, the full model summary shows that the multiple 
+#R-squared value is 0.8719, which means that about 87.19% of the variation 
+#in 'mpg' can be explained by the predictor variables. However, the adjusted
+#R-squared Value is only 0.7865, which which means that about 78.65% of the 
+#variation in 'mpg' can be explained by the predictor variablesthe. And p-values 
+#associated with each predictor variable are all relatively high (>= 0.05), 
+#indicating that none variables are statistically significant in this model.
+
+# Second, Model diagnostics:Check the assumptions of the linear regression model
+# Diagnostic plots
+par(mfrow = c(2, 2))
+plot(full_model)
+
+# The red parabola indicates the trend in the residuals, and as it deviates 
+#from the horizontal line at y=0, suggesting that a linear model 
+#may not be the best fit for the data.
+
+# And the Q-Q plot it seems that most of the points are on the diagonal line, 
+#which is a good sign. However, the last few points deviate from the line. This 
+#might indicate that there are some minor deviations from normality, but overall,
+#the normality assumption seems to be mostly met.
+
+# And in the Scale-Location plot, it seems that the points are surrounding the 
+#red line without any clear pattern, which is a good sign. It suggests that 
+#the assumption of homoscedasticity is mostly met for the current model.
+
+# In Residuals vs Leverage plot, it seems that there is no apparent pattern, 
+#and most points are within the top and bottom grey dotted lines 
+#(0.5 Cook's distance), indicating that there are no highly influential points
+#affecting the model. This is a good sign, as it suggests that the model's
+#assumptions are mostly met and the model is likely reliable.
+
+# Third, perform a backward elimination using the 'step' function:
+step_model <- step(full_model, direction = "backward")
+summary(step_model)
+
+#The summary of the refined step_model indicates that it's a good fit for the 
+#data. The adjusted R-squared value is 0.838, which suggests that the model 
+#explains about 83.8% of the variance in the response variable (mpg) using 
+#the two predictor variables (cyl and wt), which is higher than the initial
+#full model's Adjusted R-squared Value that is 0.7865. The increase in the 
+#adjusted R-squared value suggests that the refined model is a better choice 
+#because it balances the trade-off between model complexity and 
+#model performance.Also the F-statistic is 65.68 with a p-value of
+#3.103e-10, which is highly significant. This indicates that the model as a 
+#whole is significantly better than a model with no predictors.
+
+# Then, plot Diagnostic plots for the step_model
+par(mfrow = c(2, 2))
+plot(step_model)
+
+# By obeserving the new plots, comparing with the disgnostic plots for the 
+#initial model, everything is getting a little bit better, the assumptions of 
+#the linear regression model are met.
+
+# In this case, we did not perform any transformation on the response or the
+#predictors, because after comparing with the disgnostic plots for the 
+#initial model, everything is getting a little bit better, 
+#the assumptions of the linear regression model are met.
+```
+
+```{r}
+## Q(4)Use the predict function to generate predictions for the test dataset:
+test_sample$predicted_mpg <- predict(step_model, newdata = test_sample)
+print(test_sample$predicted_mpg)
+
+# Then calculate the residuals
+test_sample$residuals <- test_sample$mpg - test_sample$predicted_mpg
+print(test_sample$residuals)
+
+#Residuals represent the difference between the actual and predicted values.
+
+# Then calculate performance metrics:
+#MSE for test sample
+mse_test <- mean(test_sample$residuals^2)
+print(mse_test)
+#comparing the mse_test with the MSE for training sample
+training_sample$predicted_mpg <- predict(step_model, newdata = training_sample)
+training_sample$residuals <- training_sample$mpg - training_sample$predicted_mpg
+mse_training <- mean(training_sample$residuals^2)
+print(mse_training)
+
+# The Mean Squared Error (MSE) for the test dataset is 12.14394, 
+#and for the training dataset, it is 4.801123. The test MSE is higher than the 
+#training MSE, This difference indicates that the model is performing better 
+#on the training dataset than on the test dataset.
+
+#R-squared
+SST <- sum((test_sample$mpg - mean(test_sample$mpg))^2)
+SSR <- sum(test_sample$residuals^2)
+r_squared <- 1 - (SSR/SST)
+print(r_squared)
+
+#The R-squared value for the test dataset is 0.7472016. This means that
+#approximately 74.72% of the variance in the mpg variable can be explained 
+#by the selected model on the test dataset.
+
+
+##Overall assessment:
+
+# 1.Variable selection: The initial full model included all predictors, 
+#but the stepwise variable selection process helped identify a more parsimonious
+#model with only two significant predictors, cyl and wt. This simplified model
+#provides a more interpretable and potentially more generalizable model, 
+#with less risk of overfitting.
+
+# 2.Model diagnostics: The diagnostic plots of the selected model showed that 
+#the assumptions of linear regression were reasonably met, with no strong 
+#evidence of non-linearity, heteroscedasticity, or violation of the normality 
+#of residuals.
+
+# 3.Model performance: The adjusted R-squared value for the simplified model was
+#0.838 on the training dataset, which indicates that the model explains 
+#approximately 83.8% of the variance in mpg. The R-squared value for the test 
+#dataset was 0.747, which is slightly lower than the training dataset but still 
+#indicates decent predictive performance.
+
+# 4.Prediction performance: The Mean Squared Error (MSE) was 4.80 for the 
+#training dataset and 12.14 for the test dataset. The higher MSE in the test 
+#dataset may suggest that the model is not perfectly generalizing to unseen data.
+#However, given the small sample size, this difference might not be too 
+#concerning. It's important to remember that the model's performance might vary 
+#depending on the specific data points in the training and test datasets.
+
+# In conclusion, the simplified model with only cyl and wt as predictors 
+#performed reasonably well in explaining the variance in mpg. The model 
+#assumptions were largely met, and the model showed decent predictive 
+#performance on the test dataset. 
+```
+
+
+
+

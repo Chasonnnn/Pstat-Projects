@@ -1,0 +1,137 @@
+---
+title: "Untitled"
+author: "Haocheng Zhang"
+date: "2023-05-28"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#Problem 4
+
+#Load the data
+polls_data_2016 = read.csv("president_general_polls_sorted_end_date_2016.csv")
+polls_data_2020 = read.csv("president_polls_2020.csv")
+library(lubridate)
+library(usmap)
+library(ggplot2)
+
+
+index_na=which(is.na(polls_data_2020$sample_size)==T)
+
+polls_data_2020=polls_data_2020[which(polls_data_2020$answer==
+                                        'Biden'|polls_data_2020$answer==
+                                        'Trump'),]
+
+delete_index=which( (polls_data_2020$pollster_id==
+                      1610|polls_data_2020$pollster_id==1193)&
+                      mdy(polls_data_2020$end_date)!= "2020-11-01")
+polls_data_2020=polls_data_2020[-delete_index,]
+
+##now let's delete those poll that only contains one candidate
+polls_data_2020_question_id_num=unique(polls_data_2020$question_id)
+##clean the data
+for(i in 1:length(unique(polls_data_2020$question_id)) ){
+  index_set=which(polls_data_2020$question_id==
+                    polls_data_2020_question_id_num[i])
+  if(length(index_set)!=2){
+    polls_data_2020=polls_data_2020[-index_set,]
+  }
+}
+
+index_NA=which(is.na(polls_data_2020$sample_size)==T)
+
+polls_data_2020=polls_data_2020[-index_NA,]
+
+polls_data_2016_enddate=mdy(polls_data_2016$enddate)
+
+poll_state_sum_clinton_2016=aggregate(polls_data_2016$total.clinton, by=list(State=polls_data_2016$state),FUN=sum)
+poll_state_sum_trump_2016=aggregate(polls_data_2016$total.trump, by=list(State=polls_data_2016$state),FUN=sum)
+
+poll_state_diff_percentage=poll_state_sum_clinton_2016
+poll_state_diff_percentage[,2]=(poll_state_sum_clinton_2016[,2]-
+                                  poll_state_sum_trump_2016[,2])/(poll_state_sum_clinton_2016[,2]+
+                                                                    poll_state_sum_trump_2016[,2])
+delete_index=which(levels(poll_state_diff_percentage[,1])=='U.S.')
+if(length(delete_index)>0){
+  poll_state_diff_percentage=poll_state_diff_percentage[-delete_index,]
+  poll_state_diff_percentage[,1]
+}
+
+state_poll_2016 <- data.frame(
+  state =poll_state_diff_percentage[,1],
+  diff_percentage=poll_state_diff_percentage[,2]
+)
+
+index_biden_2020=which(polls_data_2020$answer=='Biden')
+index_trump_2020=which(polls_data_2020$answer=='Trump' )
+
+counts_biden_2020=polls_data_2020$pct[index_biden_2020]*polls_data_2020$
+  sample_size[index_biden_2020]
+counts_trump_2020=polls_data_2020$pct[index_trump_2020]*polls_data_2020$
+  sample_size[index_trump_2020]
+
+polls_data_2020$total.biden=rep(0,dim(polls_data_2020)[1])
+polls_data_2020$total.trump=rep(0,dim(polls_data_2020)[1])
+
+polls_data_2020$total.biden[index_biden_2020]=counts_biden_2020
+polls_data_2020$total.trump[index_trump_2020]=counts_trump_2020
+
+poll_state_sum_biden_2020=aggregate(polls_data_2020$total.biden, by=list(State=polls_data_2020$state),FUN=sum)
+poll_state_sum_trump_2020=aggregate(polls_data_2020$total.trump, by=list(State=polls_data_2020$state),FUN=sum)
+
+poll_state_sum_biden_2020=poll_state_sum_biden_2020[-1,]
+poll_state_sum_trump_2020=poll_state_sum_trump_2020[-1,]
+
+state_poll_2020 <- data.frame(
+  state =poll_state_sum_biden_2020[,1],
+  diff_percentage=(poll_state_sum_biden_2020[,2]-poll_state_sum_trump_2020[,2])/
+    (poll_state_sum_biden_2020[,2]+poll_state_sum_trump_2020[,2])
+)
+
+limit_val=c(min(state_poll_2016$diff_percentage,state_poll_2020$diff_percentage),
+            max(state_poll_2016$diff_percentage,state_poll_2020$diff_percentage))
+
+plot_usmap(data = state_poll_2016, values = "diff_percentage", color = "black") +
+  scale_fill_gradient2(name = "difference (%)",   low= "red",
+                       mid = "white",
+                       high = "blue",
+                       midpoint = 0,limits=limit_val)+
+  theme(legend.position = "right")+
+  ggtitle("2016") 
+##2020
+##it does not have poll from Nebraska. It does not plot the poll from 
+#congressional district
+plot_usmap(data = state_poll_2020, values = "diff_percentage", color = "black")+
+  scale_fill_gradient2(name = "difference (%)",   low= "red",
+                       mid = "white",
+                       high = "blue",
+                       midpoint = 0,limits=limit_val)+
+  theme(legend.position = "right")+
+  ggtitle("2020") 
+```
+```{r}
+# Part b
+state_poll_2016=state_poll_2016[-c(33,50),]
+
+dif <- data.frame(
+  state <- state_poll_2016$state,
+  diff_2016 <- state_poll_2016$diff_percentage,
+  diff_2020 <- state_poll_2020$diff_percentage
+)
+index_change = which(dif$diff_2016*dif$diff_2020<0)
+dif$state[index_change]
+```
+
+```{r}
+##part(C)
+
+#No, there are not. The states I've listed that did not flip in reality -- 
+#Florida and Nevada -- could have been identified as potential flips due to 
+#close polling results, demographic changes, or other state-specific factors. #However, many elements can influence election outcomes beyond what polls 
+#predict, such as voter turnout, campaign strategies, and major events.

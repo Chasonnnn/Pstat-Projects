@@ -1,0 +1,106 @@
+---
+title: "Untitled"
+author: "Haocheng Zhang"
+date: "2023-05-28"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+##Q5
+
+#Load the data
+polls_data_2016 = read.csv("president_general_polls_sorted_end_date_2016.csv")
+polls_data_2020 = read.csv("president_polls_2020.csv")
+library(ggplot2)
+
+#2016
+index_2016_Flo=which(polls_data_2016$state=="Florida")
+index_2016_Iow=which(polls_data_2016$state=="Iowa")
+
+Fol_2016_real_clinton = 47.82;
+Iow_2016_real_clinton = 41.74;
+
+polls_data_2016[index_2016_Flo,]$rawpoll_clinton = polls_data_2016[index_2016_Flo,]$rawpoll_clinton - Fol_2016_real_clinton
+polls_data_2016[index_2016_Iow,]$rawpoll_clinton = polls_data_2016[index_2016_Iow,]$rawpoll_clinton - Iow_2016_real_clinton
+
+ggplot(data = polls_data_2016[index_2016_Flo,]) +
+  aes(y = rawpoll_clinton, x = pollster) +
+  geom_jitter()+
+  ggtitle("2016_Florida")
+
+ggplot(data = polls_data_2016[index_2016_Iow,]) +
+  aes(y = rawpoll_clinton, x = pollster) +
+  geom_jitter()+
+  ggtitle("2016_Iowa")
+
+#2020
+Flo_2020_real_biden = 47.86;
+Iow_2020_real_biden = 44.89;
+
+index_biden_Flo_2020=which(polls_data_2020$answer=='Biden' & polls_data_2020$state=="Florida")
+index_biden_Iow_2020=which(polls_data_2020$answer=='Biden' & polls_data_2020$state=="Iowa")
+
+polls_data_2020[index_biden_Flo_2020,]$pct = polls_data_2020[index_biden_Flo_2020,]$pct - Flo_2020_real_biden
+polls_data_2020[index_biden_Iow_2020,]$pct = polls_data_2020[index_biden_Iow_2020,]$pct - Flo_2020_real_biden
+
+ggplot(data = polls_data_2020[index_biden_Flo_2020,]) +
+  aes(y = pct, x = pollster_rating_name) +
+  geom_jitter()+
+  ggtitle("2020_Florida")
+
+ggplot(data = polls_data_2020[index_biden_Iow_2020,]) +
+  aes(y = pct, x = pollster_rating_name) +
+  geom_jitter()+
+  ggtitle("2020_Iowa")
+```
+```{r}
+##part(a)
+#They're not accurate, and there might be Response Bias: Even if the sample
+#accurately represents the population, the individuals who choose to respond to
+#the poll may be systematically different from those who do not. For instance,
+#supporters of a particular candidate may be more or less likely to respond 
+#to a poll, creating a bias in the results.
+
+```
+
+```{r}
+##part(b)
+#polling firms like Selzer & Co. have been noted for their accuracy, 
+#especially in Iowa., 
+#https://projects.fivethirtyeight.com/pollster-ratings/selzer-co/
+#https://www.desmoinesregister.com/story/news/politics/2020/11/04/
+#iowa-poll-closely-matches-election-results-how-did-ann-selzer-do-it/6159615002/
+
+```
+
+```{r}
+
+##part(C)
+#Some potential sources of bias include:
+#Nonresponse Bias: People who are less likely to respond to surveys may also be 
+#more likely to vote for a particular candidate.
+#Late Deciders: Some people may only decide who they will vote for at the last
+#minute, after the polls have closed.
+#Sampling Error: The sample drawn for the poll may not accurately represent 
+#the population.
+```
+
+```{r}
+##part(d)
+#Better Sampling: Ensuring that the sample is representative of the voting 
+#population is crucial. This could mean taking into account factors like age, 
+#race, education level, and geographic location.
+
+#Weighting: If the sample isn't perfectly representative, statisticians can 
+#assign weights to responses from underrepresented groups to ensure they have
+#the correct influence on the final results.
+
+#Tracking Late Changes: Conducting polls close to the election day can help 
+#capture late changes in public opinion.
+```

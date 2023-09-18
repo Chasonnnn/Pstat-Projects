@@ -1,0 +1,186 @@
+---
+title: "Pstat126 hw3"
+author: "Haocheng Zhang"
+date: "2023-03-11"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+## Show the table with the given command.
+Cereal <- read.csv("cereal.csv",header=T)
+
+str(Cereal)
+```
+
+```{r}
+## Since we are required to focus on 9 varaibles, to make it easier, 
+##I'll make a new dataset named 'new_cerel' with the selected 9 variables only.
+new_cereal <- Cereal[, c("rating", "protein", "fat", "fiber", "carbo",
+                         "sugars", "potass", "vitamins", "cups")]
+```
+
+```{r}
+## (a) FIrstly, remove the observations 5, 21, and 58 as requird.
+new_cereal <- new_cereal[-c(5, 21, 58),]
+
+
+# Secondly, we can run a multiple linear regression model using the lm() function
+model <- lm(rating ~ protein + fat + fiber + carbo + sugars + potass + 
+              vitamins + cups, data = new_cereal)
+
+
+# Then, we calculate fitted response values and the residuals
+fitted_values <- fitted(model)
+
+residuals <- resid(model)
+
+# Finally, show the first 5 entries using head() function.
+head(fitted_values, 5)
+
+head(residuals, 5)
+```
+
+```{r}
+## (b)We can use a plot of residuals against fitted values,
+
+plot(model$fitted.values, model$residuals, xlab = "Fitted values", ylab = "Residuals")
+abline(h = 0, col = "blue")
+
+## From the plot above, there is not a clear pattern in the residuals and fitted values
+##and the points are randomly scattered around the horizontal line at 0. 
+##This suggests that the variance of the errors is approximately constant across
+##the range of fitted values, and the assumption of constant variance
+##is reasonable for this model.
+```
+
+```{r}
+## (c)To check if the random errors follow a normal distribution, we can use a normal probability plot.
+qqnorm(model$residuals, main="Normal Probability Plot of Residuals")
+
+qqline(model$residuals)
+
+# By observing the line and the plot above, it appears that the residuals are roughly 
+##normally distributed. The points on the plot follow a straight line fairly closely
+##except for some slight deviation at the tails. Therefore, we can conclude that
+##the random errors approximately follow a normal distribution.
+```
+
+```{r}
+## (d)To run the Shapiro-Wilk test in R for the residuals of the multiple linear
+##regression model, we can use the shapiro.test() function. 
+##And the null hypothesis of the test is that the population is normally distributed.
+shapiro.test(model$residuals)
+
+# From the output, the p-value is 0.1728, the p-value is greater than the typical
+##significance level of 0.05, we fail to reject the null hypothesis that the residuals
+##follow a normal distribution. Therefore, we can conclude that there is no significant
+##evidence that the residuals deviate from normality.
+```
+
+```{r}
+## (e)Plot successive pairs of residuals
+plot(resid(model)[-1], resid(model)[-length(resid(model))])
+
+# As we can see, there is no clear pattern or trend in the plot, suggesting that
+##there is no significant serial correlation among the residuals, 
+##which suggests that there is no serial correlation among the observations.
+```
+
+```{r}
+## (f)Run the Durbin-Watson test
+library(lmtest)
+dwtest(model)
+
+# The p-value is 0.2041, indicating that there is no significant evidence of 
+##autocorrelation in the residuals at the 5% significance level. The null 
+##hypothesis is that there is no autocorrelation in the residuals, 
+##and the alternative hypothesis is that there is positive autocorrelation. 
+##Since the p-value is greater than 0.05, we fail to reject the null hypothesis 
+##and conclude that there is no evidence of autocorrelation in the residuals.
+```
+
+```{r}
+## (g) The hat matrix H is defined as H = X(X'X)^(-1)X', so:
+X <- model.matrix(model)
+
+H <- X %*% solve(t(X) %*% X) %*% t(X)
+
+# We can sum the diagonal elements of H and compare the result to p + 1:
+sum(diag(H))
+
+# The output of the sum is 9, and by hypothesis, the value of p=8, and p+1=9, 
+##so yes this verifies numerically that the sum of Hii from i=1 to n is 
+##H_ii = p* = p + 1.
+```
+
+```{r}
+## (h) The criterion I would use to detect high-leverage points is the hat 
+##value criterion.
+# Calculate hat values
+hat <- hatvalues(model)
+
+# Create a plot of hat values
+plot(hat, pch = 20, main = "Hat Values Plot")
+
+# Add a horizontal line at the cutoff value
+abline(h = 2*8/74, col = "red", lty = 2)
+
+# By observting the plot and the line, there're a few plots above the line, 
+##thus we can say yes there are high-leverage points.
+```
+
+```{r}
+## (i)To compute the standardized residuals, we can use the rstandard() function. 
+##Then use the criterion to identify outliers that based on standardized residuals
+##is that any observation with an absolute standardized residual greater than 3 
+##may be considered an outlier.
+
+# Compute standardized residuals
+std_resid <- rstandard(model)
+
+# Print summary of standardized residuals
+summary(std_resid)
+
+# By observing the output of the summary above, the minimal value is -2.119994, 
+##and the max value is 2.276780, and the absolute value of both would be less 
+##than 3, thus we can say there is no outliers based on the criterion of 
+##standardized residuals.
+```
+
+```{r}
+## (j) To calculate Cook's distance, we can use the cooks.distance function
+
+# Calculate Cook's distance
+cook_dist <- cooks.distance(model)
+
+# Calculate threshold
+threshold <- 4/nrow(new_cereal)
+
+# Count number of observations with Cook's distance greater than threshold
+num_observations <- sum(cook_dist > threshold)
+
+show(num_observations)
+
+# From the outcome, there're 7 observations in this data set have a 
+##Cook’s distance that is greater than 4/n.
+```
+
+```{r}
+## (k)To check whether the response needs a Box-Cox transformation, 
+##we can use the boxcox function
+library(MASS)
+
+# Fit the Box-Cox transformation
+boxcox_model <- boxcox(model)
+
+# Plot the profile log-likelihood and the recommended lambda value
+plot(boxcox_model$x, boxcox_model$y, type = "l", xlab = "lambda", ylab = "profile log-likelihood")
+
+abline(v = boxcox_model$lambda, lty = 2)
+
+# From the plot above, output of the boxcox function is around 1.0, it suggests 
+##that a Box-Cox transformation is not necessary, and that a linear regression 
+##model is appropriate for the data.
+```

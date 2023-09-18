@@ -1,0 +1,308 @@
+---
+title: "Untitled"
+author: "Haocheng Zhang"
+date: "2023-05-28"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+##Q2
+#load the data
+polls_data_2020 = read.csv("president_polls_2020.csv")
+library(lubridate)
+
+#Filter the data
+date_2020= mdy(polls_data_2020$end_date)
+index_selected=which(date_2020>='2020-08-01' & date_2020<='2020-11-02') 
+polls_data_2020 = polls_data_2020[index_selected,]
+
+polls_data_2020_question_id_num=unique(polls_data_2020$question_id)
+
+for(i in 1:length(unique(polls_data_2020$question_id)) ){
+  index_set=which(polls_data_2020$question_id==
+  polls_data_2020_question_id_num[i])
+  if(length(index_set)!=2){
+    polls_data_2020=polls_data_2020[-index_set,]
+  }
+}
+index_NA=which(is.na(polls_data_2020$sample_size)==T)
+index_NA
+polls_data_2020=polls_data_2020[-index_NA,]
+```
+
+```{r}
+# Part a
+index_biden_Mic_2020=which(polls_data_2020$answer=='Biden' & polls_data_2020$state=="Michigan")
+index_trump_Mic_2020=which(polls_data_2020$answer=='Trump' & polls_data_2020$state=="Michigan")
+
+counts_biden_Mic_2020=polls_data_2020$pct[index_biden_Mic_2020]*
+polls_data_2020$sample_size[index_biden_Mic_2020]
+counts_trump_Mic_2020=polls_data_2020$pct[index_trump_Mic_2020]*
+polls_data_2020$sample_size[index_trump_Mic_2020]
+
+n1_2020_Mic=sum(counts_biden_Mic_2020)
+n2_2020_Mic=sum(counts_trump_Mic_2020)
+
+n1_2020_Mic
+n2_2020_Mic
+
+(n1_2020_Mic-n2_2020_Mic)/(n1_2020_Mic+n2_2020_Mic)
+#The final result is 0.08231654, which shows Biden was ahead with 8.231654%
+```
+
+```{r}
+index_biden_Geo_2020=which(polls_data_2020$answer=='Biden' & polls_data_2020$state=="Georgia")
+index_trump_Geo_2020=which(polls_data_2020$answer=='Trump' & polls_data_2020$state=="Georgia")
+
+counts_biden_Geo_2020=polls_data_2020$pct[index_biden_Geo_2020]*
+polls_data_2020$sample_size[index_biden_Geo_2020]
+counts_trump_Geo_2020=polls_data_2020$pct[index_trump_Geo_2020]*
+polls_data_2020$sample_size[index_trump_Geo_2020]
+
+n1_2020_Geo=sum(counts_biden_Geo_2020)
+n2_2020_Geo=sum(counts_trump_Geo_2020)
+
+n1_2020_Geo
+n2_2020_Geo
+
+(n1_2020_Geo-n2_2020_Geo)/(n1_2020_Geo+n2_2020_Geo)
+#The final result is 0.03377752, which shows Biden was ahead with 3.377752%
+```
+```{r}
+index_biden_Nor_2020=which(polls_data_2020$answer=='Biden' & polls_data_2020$state=="North Carolina")
+index_trump_Nor_2020=which(polls_data_2020$answer=='Trump' & polls_data_2020$state=="North Carolina")
+
+counts_biden_Nor_2020=polls_data_2020$pct[index_biden_Nor_2020]*
+polls_data_2020$sample_size[index_biden_Nor_2020]
+counts_trump_Nor_2020=polls_data_2020$pct[index_trump_Nor_2020]*
+polls_data_2020$sample_size[index_trump_Nor_2020]
+
+n1_2020_Nor=sum(counts_biden_Nor_2020)
+n2_2020_Nor=sum(counts_trump_Nor_2020)
+
+n1_2020_Nor
+n2_2020_Nor
+
+(n1_2020_Nor-n2_2020_Nor)/(n1_2020_Nor+n2_2020_Nor)
+#The final result is 0.05841043, which shows Biden was ahead with 5.841043%
+```
+
+```{r}
+# Part b
+library(lubridate)
+polls_data_2020$enddate
+
+t.test(polls_data_2020$pct[index_biden_Mic_2020]*polls_data_2020$
+sample_size[index_biden_Mic_2020]-polls_data_2020$pct[index_trump_Mic_2020]*
+polls_data_2020$sample_size[index_trump_Mic_2020],alternative='greater')
+##The t-test result shows a t-value of 10.147 with 101 degrees of freedom. 
+#The test's p-value is less than 2.2e-16, which is effectively zero and therefore
+#statistically significant. This means there's a statistically significant 
+#difference between the counts in polls for Biden and Trump in favor of 
+#Biden. The confidence interval does not include 0 (22.52678 to infinity), 
+#and the estimated mean difference is 22900, both of which further support 
+#Biden being favored in this state.
+```
+```{r}
+t.test(polls_data_2020$pct[index_biden_Geo_2020]*polls_data_2020$
+sample_size[index_biden_Geo_2020]-polls_data_2020$pct[index_trump_Geo_2020]*
+polls_data_2020$sample_size[index_trump_Geo_2020],alternative='greater')
+##The t-test result shows a t-value of 6.8926 with 76 degrees of freedom. 
+#The test's p-value is less than 6.991e-10, which is effectively zero and 
+#therefore statistically significant. This means there's a statistically 
+#significant difference between the counts in polls for Biden and Trump in favor 
+#Biden. The confidence interval does not include 0 (22.52678 to infinity), 
+#and the estimated mean difference is 11293.34, both of which further support 
+#Biden being favored in this state.
+```
+```{r}
+t.test(polls_data_2020$pct[index_biden_Nor_2020]*polls_data_2020$
+sample_size[index_biden_Nor_2020]-polls_data_2020$pct[index_trump_Nor_2020]*
+polls_data_2020$sample_size[index_trump_Nor_2020],alternative='greater')
+##The t-test result shows a t-value of 8.4302 with 107 degrees of freedom. 
+#The test's p-value is less than 8.801e-14, which is effectively zero and 
+#therefore statistically significant. This means there's a statistically 
+#significant difference between the counts in polls for Biden and Trump in favor 
+#Biden. The confidence interval does not include 0 (22.52678 to infinity), 
+#and the estimated mean difference is 17228.39, both of which further support 
+#Biden being favored in this state.
+
+#A potential problem with these tests could be the assumption of normality. 
+#The t-test assumes that the differences in the data are normally distributed. 
+#If this assumption is not met, the results may not be valid. Additionally, 
+#outliers could affect the results of the t-test, leading to biased results. 
+#Finally, these tests do not account for other factors that could influence 
+#the election results, such as demographic variables or the timing of the polls.
+```
+```{r}
+# Part c
+
+wilcox.test(polls_data_2020$pct[index_biden_Mic_2020]*polls_data_2020$
+              sample_size[index_biden_Mic_2020],polls_data_2020$
+              pct[index_trump_Mic_2020]*
+              polls_data_2020$sample_size[index_trump_Mic_2020], 
+            alternative = "greater")
+#The Wilcoxon rank sum test shows a W-value of 6042 and a p-value of 0.02322. 
+#Because the p-value is less than the traditional alpha level of 0.05, we can 
+#conclude that there is a statistically significant difference between the 
+#counts in polls for Biden and Trump in favor of Clinton. This is because 
+#the test's alternative hypothesis is that the true location shift is greater 
+#than 0, which suggests a preference for Biden.
+```
+```{r}
+wilcox.test(polls_data_2020$pct[index_biden_Geo_2020]*
+              polls_data_2020$sample_size[index_biden_Geo_2020],
+            polls_data_2020$pct[index_trump_Geo_2020]*
+              polls_data_2020$sample_size[index_trump_Geo_2020],
+            alternative='greater')
+#The Wilcoxon rank sum test shows a W-value of 3203 and a p-value of 0.1949. 
+#Because the p-value is greater than the traditional alpha level of 0.05,
+#we can't conclude that there is a
+#statistically significant difference between the counts in polls for Biden 
+#and Trump. Despite this, the alternative hypothesis suggests a preference for 
+#Biden, but we can't confidently affirm this due to the lack of statistical #significance.
+```
+```{r}
+wilcox.test(polls_data_2020$pct[index_biden_Nor_2020]*polls_data_2020$
+              sample_size[index_biden_Nor_2020]-polls_data_2020$
+              pct[index_trump_Nor_2020]*polls_data_2020$
+              sample_size[index_trump_Nor_2020],
+            alternative='greater')
+#The Wilcoxon rank sum test shows a W-value of 4999 and a p-value of 1.205e-15. 
+#Because the p-value is less than the traditional alpha level of 0.05, we can 
+#conclude that there is a statistically significant difference between the 
+#counts in polls for Biden and Trump in favor of Clinton. This is because 
+#the test's alternative hypothesis is that the true location shift is greater 
+#than 0, which suggests a preference for Biden.
+
+##Potential issues with the Wilcoxon signed-rank test include the assumption of
+#symmetry, i.e., the distribution of differences between the pairs should be 
+#symmetrical. If this assumption is not met, the results may not be valid. 
+#Furthermore, outliers can impact the Wilcoxon test as the rank of the outliers 
+#will be affected, thereby influencing the test results. As with the t-test, 
+#these tests do not account for other factors that could influence the election 
+#results, such as demographic variables or the timing of the polls.
+```
+```{r}
+# Part d
+
+counts_Mic_for_lm_2020 <- data.frame(
+  data_date = date_2020[index_trump_Mic_2020],
+  percentage_diff = (counts_biden_Mic_2020-counts_trump_Mic_2020)/
+    (counts_biden_Mic_2020+counts_trump_Mic_2020)
+)
+
+lm_model_Mic_2020=lm(percentage_diff~(data_date),data=counts_Mic_for_lm_2020)
+summary(lm_model_Mic_2020)
+
+conf_interval_Mic_fitted_2020= predict(lm_model_Mic_2020, newdata=counts_Mic_for_lm_2020, interval="confidence",
+                                        level = 0.95)
+
+plot(counts_Mic_for_lm_2020$data_date,counts_Mic_for_lm_2020$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Michigan')
+polygon(c(rev(counts_Mic_for_lm_2020$data_date), 
+          counts_Mic_for_lm_2020$data_date), 
+        c(rev(conf_interval_Mic_fitted_2020[,2]), 
+          conf_interval_Mic_fitted_2020[ ,3]), col = 'grey80', border = NA)
+lines(counts_Mic_for_lm_2020$data_date,lm_model_Mic_2020$fitted.values,
+      col='black',pch=20,type='l',xlab='date',ylab='difference in counts (%)',main='Michigan')
+lines(counts_Mic_for_lm_2020$data_date,counts_Mic_for_lm_2020$percentage_diff,
+      col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Michigan')
+#The plot is slightly increasing, showing that the winning rate for Biden is
+#increasing slowly.
+```
+```{r}
+counts_Geo_for_lm_2020 <- data.frame(
+  data_date = date_2020[index_trump_Geo_2020],
+  percentage_diff = (counts_biden_Geo_2020-counts_trump_Geo_2020)/(counts_biden_Geo_2020+counts_trump_Geo_2020)
+)
+
+lm_model_Geo_2020=lm(percentage_diff~(data_date),data=counts_Geo_for_lm_2020)
+summary(lm_model_Geo_2020)
+
+conf_interval_Geo_fitted_2020= predict(lm_model_Geo_2020, newdata=counts_Geo_for_lm_2020, interval="confidence",
+                                       level = 0.95)
+
+plot(counts_Geo_for_lm_2020$data_date,counts_Geo_for_lm_2020$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Georgia')
+polygon(c(rev(counts_Geo_for_lm_2020$data_date), counts_Geo_for_lm_2020$data_date), 
+        c(rev(conf_interval_Geo_fitted_2020[,2]), conf_interval_Geo_fitted_2020[ ,3]), col = 'grey80', border = NA)
+lines(counts_Geo_for_lm_2020$data_date,lm_model_Geo_2020$fitted.values,
+      col='black',pch=20,type='l',xlab='date',ylab='difference in counts (%)',main='Georgia')
+lines(counts_Geo_for_lm_2020$data_date,counts_Geo_for_lm_2020$percentage_diff,
+      col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Georgia')
+#The plot is slightly increasing, showing that the winning rate for Biden is
+#increasing slowly.
+```
+```{r}
+counts_Nor_for_lm_2020 <- data.frame(
+  data_date = date_2020[index_trump_Nor_2020],
+  percentage_diff = (counts_biden_Nor_2020-counts_trump_Nor_2020)/(counts_biden_Nor_2020+counts_trump_Nor_2020)
+)
+
+lm_model_Nor_2020=lm(percentage_diff~(data_date),data=counts_Nor_for_lm_2020)
+summary(lm_model_Nor_2020)
+
+conf_interval_Nor_fitted_2020= predict(lm_model_Nor_2020, newdata=counts_Nor_for_lm_2020, interval="confidence",
+                                       level = 0.95)
+
+plot(counts_Nor_for_lm_2020$data_date,counts_Nor_for_lm_2020$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='North Carolina')
+polygon(c(rev(counts_Nor_for_lm_2020$data_date), counts_Nor_for_lm_2020$data_date), 
+        c(rev(conf_interval_Nor_fitted_2020[,2]), conf_interval_Nor_fitted_2020[ ,3]), col = 'grey80', border = NA)
+lines(counts_Nor_for_lm_2020$data_date,lm_model_Nor_2020$fitted.values,
+      col='black',pch=20,type='l',xlab='date',ylab='difference in counts (%)',main='North Carolina')
+lines(counts_Nor_for_lm_2020$data_date,counts_Nor_for_lm_2020$percentage_diff,
+      col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='North Carolina')
+#The plot is significantly increasing, showing that the winning rate for Biden is
+#increasing significantly.
+```
+```{r}
+##Part e
+#In Michigan the true difference was 50.62% Biden - 47.84% Trump = 2.78%. 
+#In Georgia the difference was 49.47% Biden - 49.24% Trump = 0.23%. 
+#In North Carolina the difference was 49.93% Biden - 48.59% Trump = -1.34%. 
+#The state with the closest margin was Georgia. The polls were correct
+#that Georgia would be the closest race. However they were incorrect on the #prediction that Biden would win North Carolina.
+#As per the polls, the state of Michigan was expected to favor Biden 
+#significantly, whereas the actual results show a rather close election. 
+
+##Potential problems:
+#1. Sampling bias: Polls are based on a sample of voters rather than the entire
+#population of voters. 
+#2. Late decision-makers: Some voters might not have made up their minds when 
+#they were polled but decided later on, and these late deciders might have 
+#favored Trump over Biden. These changes would not have been captured in polls.
+```
+
+```{r}
+##Part f
+#In Michigan, the polls indicated that Biden would win 
+#According to the data we got, Biden won, 
+
+#In Georgia, the polls indicated that Biden would win 
+#According to the data we got, Biden won, 
+
+#In North Carolina, the polls indicated Biden would win, but 
+#as a result, Trump won.
+
+##Potential problems:
+#1. ifferential turnout: The voters who actually turn up to vote on Election Day 
+#may not be the same as those who responded to the polls. For example, 
+#if Trump supporters were more motivated to vote than Biden supporters, 
+#this could have led to Trump receiving a higher proportion of the votes than
+#expected.
+
+#2. Shy Trump voters: Some research suggests that there may be a subset of Trump
+#voters who were reluctant to express their support for him in a polling 
+#situation, but who did vote for him on Election Day. If this were the case, 
+#it could explain why Trump's actual vote share was higher than the polls 
+#predicted.
+```
+
+

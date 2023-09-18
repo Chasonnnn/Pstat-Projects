@@ -1,0 +1,288 @@
+---
+title: "Untitled"
+author: "Haocheng Zhang"
+date: "2023-05-28"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+##Q1
+#load the data
+polls_data_2016 = read.csv("president_general_polls_sorted_end_date_2016.csv")
+library(lubridate)
+
+##dimension of this dataset
+dim(polls_data_2016)
+##variable name of the data
+names(polls_data_2016)
+
+#Filter the data
+date_2016= mdy(polls_data_2016$createddate)
+index_selected=which(date_2016>='2016-08-01' & date_2016<='2016-11-02') 
+polls_data_2016 = polls_data_2016[index_selected,]
+```
+
+```{r}
+# Part a
+index_Mic=which(polls_data_2016$state=="Michigan")
+
+n1=sum(polls_data_2016$total.clinton[index_Mic])
+n2=sum(polls_data_2016$total.trump[index_Mic])
+
+n1/(n1+n2)
+n2/(n1+n2)
+n1/(n1+n2)-n2/(n1+n2)
+#The final result is 0.0365849, which shows Clinton was ahead with 3.65849%
+```
+```{r}
+index_Geo=which(polls_data_2016$state=="Georgia")
+
+n1=sum(polls_data_2016$total.clinton[index_Geo])
+n2=sum(polls_data_2016$total.trump[index_Geo])
+
+n1/(n1+n2)
+n2/(n1+n2)
+n1/(n1+n2)-n2/(n1+n2)
+#The final result is -0.0670975, which shows Trump was ahead with 6.70975%
+```
+```{r}
+index_Nor=which(polls_data_2016$state=="North Carolina")
+
+n1=sum(polls_data_2016$total.clinton[index_Nor])
+n2=sum(polls_data_2016$total.trump[index_Nor])
+
+n1/(n1+n2)
+n2/(n1+n2)
+n1/(n1+n2)-n2/(n1+n2)
+#The final result is -0.004276271, which shows Trump was ahead with 0.4276271%
+```
+
+```{r}
+# Part b
+polls_data_2016$enddate
+
+t.test(polls_data_2016$total.clinton[index_Mic]-
+         polls_data_2016$total.trump[index_Mic],alternative='greater')
+##The t-test result shows a t-value of 10.484 with 167 degrees of freedom. 
+#The test's p-value is less than 2.2e-16, which is effectively zero and therefore
+#statistically significant. This means there's a statistically significant 
+#difference between the counts in polls for Clinton and Trump in favor of 
+#Clinton. The confidence interval does not include 0 (22.52678 to infinity), 
+#and the estimated mean difference is 26.74654, both of which further support 
+#Clinton being favored in this state.
+```
+```{r}
+t.test(polls_data_2016$total.clinton[index_Geo]-
+         polls_data_2016$total.trump[index_Geo],alternative='greater')
+##Here, the t-value is -19.191 with 164 degrees of freedom. 
+#The test's p-value is 1, indicating that the result is not statistically 
+#significant under a traditional alpha level (such as 0.05). The confidence 
+#interval goes from -56.48463 to infinity and the mean difference is negative
+#(-52.00212). This suggests that Trump was favored in this state, but because 
+#the p-value is not statistically significant, we cannot conclude that 
+#the observed difference is not due to chance.
+```
+```{r}
+t.test(polls_data_2016$total.clinton[index_Nor]-
+         polls_data_2016$total.trump[index_Nor],alternative='greater')
+#The t-value is -1.5907 with 263 degrees of freedom. The p-value is 0.9436, 
+#suggesting that the result is not statistically significant at the usual 
+#alpha levels. The confidence interval ranges from -6.27371 to infinity, 
+#and the mean difference is negative (-3.07883). This implies that Trump 
+#has a higher count in polls, but as the p-value is not statistically 
+#significant, the observed difference could be due to chance.
+
+#A potential problem with these tests could be the assumption of normality. 
+#The t-test assumes that the differences in the data are normally distributed. 
+#If this assumption is not met, the results may not be valid. Additionally, 
+#outliers could affect the results of the t-test, leading to biased results. 
+#Finally, these tests do not account for other factors that could influence 
+#the election results, such as demographic variables or the timing of the polls.
+```
+
+```{r}
+# Part c
+
+wilcox.test(polls_data_2016$total.clinton[index_Mic], polls_data_2016$total.trump[index_Mic], alternative = "greater")
+
+#The Wilcoxon rank sum test shows a W-value of 16505 and a p-value of 0.003601. 
+#Because the p-value is less than the traditional alpha level of 0.05, we can 
+#conclude that there is a statistically significant difference between the 
+#counts in polls for Clinton and Trump in favor of Clinton. This is because 
+#the test's alternative hypothesis is that the true location shift is greater 
+#than 0, which suggests a preference for Clinton.
+```
+```{r}
+wilcox.test(polls_data_2016$total.clinton[index_Geo], polls_data_2016$total.trump[index_Geo], alternative = "greater")
+
+#Here, the W-value is 9341, and the p-value is 1. Given that the p-value is not
+#less than the usual alpha level of 0.05, we can't conclude that there is a
+#statistically significant difference between the counts in polls for Clinton 
+#and Trump. Despite this, the alternative hypothesis suggests a preference for 
+#Clinton, but we can't confidently affirm this due to the lack of statistical #significance.
+```
+```{r}
+wilcox.test(polls_data_2016$total.clinton[index_Nor], polls_data_2016$total.trump[index_Nor], alternative = "greater")
+#The W-value is 33778, and the p-value is 0.7293. Since the p-value is not less 
+#than the standard alpha level of 0.05, the result is not statistically 
+#significant. Thus, there is no significant difference between the counts in 
+#polls for Clinton and Trump in this state. Although the alternative hypothesis 
+#implies a preference for Clinton, we can't confirm this because of the test's
+#non-significant outcome.
+
+##Potential issues with the Wilcoxon signed-rank test include the assumption of
+#symmetry, i.e., the distribution of differences between the pairs should be 
+#symmetrical. If this assumption is not met, the results may not be valid. 
+#Furthermore, outliers can impact the Wilcoxon test as the rank of the outliers 
+#will be affected, thereby influencing the test results. As with the t-test, 
+#these tests do not account for other factors that could influence the election 
+#results, such as demographic variables or the timing of the polls.
+```
+
+```{r}
+# Part d
+
+date_Mic <- mdy(polls_data_2016$enddate[index_Mic])
+date_Geo <- mdy(polls_data_2016$enddate[index_Geo])
+date_Nor <- mdy(polls_data_2016$enddate[index_Nor])
+
+counts_Mic_for_lm <- data.frame(
+  data_date = date_Mic,
+  percentage_diff = (polls_data_2016$total.clinton[index_Mic]-
+                       polls_data_2016$total.trump[index_Mic])/
+    (polls_data_2016$total.clinton[index_Mic]+
+       polls_data_2016$total.trump[index_Mic])
+)
+as.numeric(date_Mic)
+lm_model_Mic=lm(percentage_diff~(data_date),data=counts_Mic_for_lm)
+summary(lm_model_Mic)
+
+#The fitted linear model's coefficient for data_date (representing time) is 
+#5.563e-05, which is not statistically significant (p = 0.655). 
+#This means there is no statistically significant linear trend in the percentage
+#difference in polls over time for this state. The Adjusted R-squared value is
+#-0.004812, indicating the model explains very little of the variance in the data.
+
+plot(counts_Mic_for_lm$data_date,counts_Mic_for_lm$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Michigan')
+lines(counts_Mic_for_lm$data_date,lm_model_Mic$fitted.values,
+      col='black',pch=20,type='l',xlab='date',ylab='difference in counts (%)',main='Michigan')
+
+#The plot is slightly increasing, showing that the winning rate for Clinton is
+#increasing slowly.
+```
+
+```{r}
+counts_Geo_for_lm <- data.frame(
+  data_date = date_Geo,
+  percentage_diff = (polls_data_2016$total.clinton[index_Geo]-
+                       polls_data_2016$total.trump[index_Geo])/
+    (polls_data_2016$total.clinton[index_Geo]+
+       polls_data_2016$total.trump[index_Geo])
+)
+as.numeric(date_Geo)
+lm_model_Geo=lm(percentage_diff~(data_date),data=counts_Geo_for_lm)
+summary(lm_model_Geo)
+#Here, the coefficient for data_date is -1.595e-05, which is also not 
+#statistically significant (p = 0.917). This means there is no significant 
+#linear trend in the percentage difference in polls over time for this state. 
+#The Adjusted R-squared value is -0.006068, suggesting that the model doesn't 
+#explain the variance in the data well.
+
+plot(counts_Geo_for_lm$data_date,counts_Geo_for_lm$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Georgia')
+lines(counts_Geo_for_lm$data_date,lm_model_Geo$fitted.values,
+      col='black',pch=20,type='l',xlab='date',ylab='difference in counts (%)',main='Georgia')
+
+#The plot is almost horizontal, showing that the winning rate for Clinton/Trimp 
+#is not significantly changing. So it would be the closest race.
+```
+
+```{r}
+counts_Nor_for_lm <- data.frame(
+  data_date = date_Nor,
+  percentage_diff = (polls_data_2016$total.clinton[index_Nor]-
+                       polls_data_2016$total.trump[index_Nor])/
+    (polls_data_2016$total.clinton[index_Nor]+
+       polls_data_2016$total.trump[index_Nor])
+)
+as.numeric(date_Nor)
+lm_model_Nor=lm(percentage_diff~(data_date),data=counts_Nor_for_lm)
+summary(lm_model_Nor)
+
+
+#The coefficient for data_date is 0.0003274, which is statistically 
+#significant (p = 0.00131). This suggests there is a significant positive 
+#linear trend in the percentage difference in polls over time for this state. 
+#The Adjusted R-squared value is 0.03506, indicating that the model explains 
+#about 3.5% of the variance in the data, which is relatively low, but higher 
+#than the other two states.
+
+plot(counts_Nor_for_lm$data_date,counts_Nor_for_lm$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='North Carolina')
+lines(counts_Nor_for_lm$data_date,lm_model_Nor$fitted.values,
+      col='black',pch=20,type='l',xlab='date',ylab='difference in counts (%)',main='North Carolina')
+
+#The plot is slightly increasing, showing that the winning rate for Clinton is
+#increasing slowly.
+```
+
+```{r}
+##Part e
+#In reality North Carolina voted 49.83% Trump 46.17% Clinton, 
+#Michigan voted 47.25% Trump 47.03% Clinton and Georgia voted 50.38% 
+#Trump 45.29% Clinton. The smallest margin was in Michigan with 0.22% 
+#Based on the provided real election data, indeed, the state with the smallest 
+#margin in the 2016 election is Georgia, with a difference of only 0.22%.
+#However, if we compare these results with the predictions from the polls, 
+#there might be some discrepancies. As per the polls, the state of Michigan was 
+#expected to favor Clinton significantly, whereas the actual results show a rather
+#close election. Similarly, in Georgia and North Carolina, the margin of 
+#difference between the two candidates in actual results appears to be 
+#smaller than predicted by the polls.
+
+##Potential problems:
+#1. Sampling bias: Polls are based on a sample of voters rather than the entire
+#population of voters. 
+#2. Late decision-makers: Some voters might not have made up their minds when 
+#they were polled but decided later on, and these late deciders might have 
+#favored Trump over Biden. These changes would not have been captured in polls.
+```
+
+```{r}
+##Part f
+#In Michigan, the polls indicated that Clinton would win (average of 26.7% more 
+#votes than Trump). According to the data we got, Clinton won, 
+#but the margin was only 2.78%. This indicates a significant overestimation of #Democratic support in the polls.
+
+#In Georgia, the polls showed Trump winning (average of 52% more votes than 
+#Clinton). The actual result, however, was a narrow win for Clinton (0.23% 
+#margin). This suggests a significant underestimation of Democratic support 
+#in the polls.
+
+#In North Carolina, the polls indicated a close race, but slightly favored Trump
+#(average of 3.08% more votes than Clinton). The actual results showed a 
+#win for Clinton, albeit with a -1.34% margin. 
+#This again suggests an underestimation of Democratic support in the polls.
+
+##Potential problems:
+#1. ifferential turnout: The voters who actually turn up to vote on Election Day 
+#may not be the same as those who responded to the polls. For example, 
+#if Trump supporters were more motivated to vote than Biden supporters, 
+#this could have led to Trump receiving a higher proportion of the votes than
+#expected.
+
+#2. Shy Trump voters: Some research suggests that there may be a subset of Trump
+#voters who were reluctant to express their support for him in a polling 
+#situation, but who did vote for him on Election Day. If this were the case, 
+#it could explain why Trump's actual vote share was higher than the polls 
+#predicted.
+```
+
+

@@ -1,0 +1,193 @@
+---
+title: "Untitled"
+author: "Haocheng Zhang"
+date: "2023-05-28"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+##Q3
+#Load the data
+polls_data_2016 = read.csv("president_general_polls_sorted_end_date_2016.csv")
+polls_data_2020 = read.csv("president_polls_2020.csv")
+library(lubridate)
+library(usmap)
+library(ggplot2)
+
+date_2016= mdy(polls_data_2016$createddate)
+index_selected=which(date_2016>='2016-09-01' & date_2016<='2016-11-02') 
+polls_data_2016 = polls_data_2016[index_selected,]
+
+date_2020= mdy(polls_data_2020$end_date)
+
+index_selected=which(date_2020>='2020-09-01' & date_2020<='2020-11-02')
+polls_data_2020=polls_data_2020[index_selected,]
+
+index_na=which(is.na(polls_data_2020$sample_size)==T)
+
+polls_data_2020=polls_data_2020[which(polls_data_2020$answer==
+                                        'Biden'|polls_data_2020$answer=='Trump'),]
+
+delete_index=which( (polls_data_2020$pollster_id==
+                       1610|polls_data_2020$pollster_id==1193)&
+                      mdy(polls_data_2020$end_date)!= "2020-11-01")
+polls_data_2020=polls_data_2020[-delete_index,]
+
+##now let's delete those poll that only contains one candidate
+polls_data_2020_question_id_num=unique(polls_data_2020$question_id)
+##clean the data
+for(i in 1:length(unique(polls_data_2020$question_id)) ){
+  index_set=which(polls_data_2020$question_id==
+                    polls_data_2020_question_id_num[i])
+  if(length(index_set)!=2){
+    polls_data_2020=polls_data_2020[-index_set,]
+  }
+}
+
+index_NA=which(is.na(polls_data_2020$sample_size)==T)
+
+polls_data_2020=polls_data_2020[-index_NA,]
+
+polls_data_2016_enddate=mdy(polls_data_2016$enddate)
+
+poll_state_sum_clinton_2016=aggregate(polls_data_2016$total.clinton, 
+                                      by=list(State=polls_data_2016$state),
+                                      FUN=sum)
+poll_state_sum_trump_2016=aggregate(polls_data_2016$total.trump, 
+                                    by=list(State=polls_data_2016$state),
+                                    FUN=sum)
+
+poll_state_diff_percentage=poll_state_sum_clinton_2016
+poll_state_diff_percentage[,2]=(poll_state_sum_clinton_2016[,2]-
+                                  poll_state_sum_trump_2016[,2])/
+  (poll_state_sum_clinton_2016[,2]+poll_state_sum_trump_2016[,2])
+delete_index=which(levels(poll_state_diff_percentage[,1])=='U.S.')
+if(length(delete_index)>0){
+  poll_state_diff_percentage=poll_state_diff_percentage[-delete_index,]
+  poll_state_diff_percentage[,1]
+}
+
+state_poll_2016 <- data.frame(
+  state =poll_state_diff_percentage[,1],
+  diff_percentage=poll_state_diff_percentage[,2]
+)
+
+index_biden_2020=which(polls_data_2020$answer=='Biden')
+index_trump_2020=which(polls_data_2020$answer=='Trump' )
+
+counts_biden_2020=polls_data_2020$pct[index_biden_2020]*
+  polls_data_2020$sample_size[index_biden_2020]
+counts_trump_2020=polls_data_2020$pct[index_trump_2020]*
+  polls_data_2020$sample_size[index_trump_2020]
+
+polls_data_2020$total.biden=rep(0,dim(polls_data_2020)[1])
+polls_data_2020$total.trump=rep(0,dim(polls_data_2020)[1])
+
+polls_data_2020$total.biden[index_biden_2020]=counts_biden_2020
+polls_data_2020$total.trump[index_trump_2020]=counts_trump_2020
+
+poll_state_sum_biden_2020=aggregate(polls_data_2020$total.biden, 
+                                    by=list(State=polls_data_2020$state),
+                                    FUN=sum)
+poll_state_sum_trump_2020=aggregate(polls_data_2020$total.trump, 
+                                    by=list(State=polls_data_2020$state),
+                                    FUN=sum)
+
+poll_state_sum_biden_2020=poll_state_sum_biden_2020[-1,]
+poll_state_sum_trump_2020=poll_state_sum_trump_2020[-1,]
+
+state_poll_2020 <- data.frame(
+  state =poll_state_sum_biden_2020[,1],
+  diff_percentage=(poll_state_sum_biden_2020[,2]-
+                     poll_state_sum_trump_2020[,2])/
+    (poll_state_sum_biden_2020[,2]+poll_state_sum_trump_2020[,2])
+)
+
+limit_val=c(min(state_poll_2016$diff_percentage,state_poll_2020$diff_percentage),
+            max(state_poll_2016$diff_percentage,state_poll_2020$diff_percentage))
+
+
+
+##difference between 2020 and 2016
+##delete nebrask CD-1 and CD-3, US, as 2020 does not have it 
+state_poll_2016$state
+state_poll_2020$state
+state_poll_2016=state_poll_2016[-c(31,33,50),]
+
+
+state_poll_2020_2016_diff <- data.frame(
+  state =state_poll_2020$state,
+  diff=state_poll_2020$diff_percentage-state_poll_2016$diff_percentage
+)
+
+plot_usmap(data = state_poll_2020_2016_diff, values = "diff", color = "black") +
+  scale_fill_gradient2(name = "difference between 2016 and 2020 (%)", 
+                       low= "red",
+                       mid = "white",
+                       high = "blue",
+                       midpoint = 0)+
+  theme(legend.position = "right")+
+  ggtitle("difference between 2020 and 2016") 
+
+##The visual representation in these graphs suggests an increased polarization 
+#between the two major political parties from 2016 to 2020, with an apparent 
+#overall shift towards the Democratic party across the map. This shift could
+#potentially be attributed to dissatisfaction with the Republican response 
+#to the pandemic. Additionally, it appears that discontentment with 
+#President Trump's administration may have contributed to this trend.
+
+```
+
+
+```{r}
+# Part b
+sort_diff <- state_poll_2020_2016_diff[order(state_poll_2020_2016_diff$diff),]
+sort_diff
+
+##Based on the results, the ten battleground states in 2020 -- 
+#defined as those with the smallest percentage differences between the two major #candidates -- would be:
+
+#Arkansas
+#Louisiana
+#Kansas
+#Kentucky
+#Mississippi
+#Oklahoma
+#Utah
+#Missouri
+#South Carolina
+#Indiana
+```
+```{r}
+#Part(C)
+print(state_poll_2020_2016_diff)
+```
+
+```{r}
+##From the result in (C), in most of these states, polls may have underestimated 
+#the percentage of real votes received by one candidate in both 2016 and 2020, 
+#as most differences are positive.
+
+#For example, in Alabama, the difference between the polling prediction and the
+#actual result was approximately 6.92% in 2016 and likely a similar value in 
+#2020. This suggests that the candidate was predicted to get less support than 
+#they actually received. However, in Arkansas, the polls overestimated the 
+#support for the candidate by around 5.05%, as indicated by the negative 
+#difference.
+
+#There can be several reasons for this bias in the polls:
+#Nonresponse Bias: Some people are less likely to respond to polls, 
+#and these people might be more likely to vote for one candidate. 
+#If these individuals aren't adequately represented in the sample, 
+#the poll can be biased towards the other candidate.
+
+#Shy Voter Theory: Some voters might be hesitant to reveal their true voting
+#intention in a poll, especially if they feel their choice isn't the socially
+#desirable one. This can result in underestimation of support for a candidate.
+```

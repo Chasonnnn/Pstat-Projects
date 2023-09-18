@@ -1,0 +1,191 @@
+---
+title: "Homework 4"
+subtitle: "PSTAT Winter 2023"
+author: "Haocheng Zhang"
+date: "2023-03-17"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r dat, include=TRUE}
+library(ISLR)
+data(Auto)
+```
+
+```{r model, include=FALSE}
+Autod<- Auto
+Autod$cylinders<- as.factor(Autod$cylinders)
+Autod$year<- as.factor(Autod$year)
+Autod$origin<- as.factor(Autod$origin)
+lmod<- lm(mpg~. - name, Autod)
+```
+
+```{r}
+## Q1(a): 
+# Qualitative predictors: cylinders, year, origin, (name, but it is excluded 
+# from the linear regression model)
+
+# Quantitative predictors: displacement, horsepower, weight, acceleration
+```
+
+```{r}
+## Q1(b) Fit the MLR model.
+lmod<- lm(mpg~. - name, Autod)
+# Then use the anova() function in R to perform an analysis of variance
+anova_lmod <- anova(lmod)
+
+print(anova_lmod)
+
+# Based on the anova table and p-values, we can make the following observations about the 
+# predictors and their linear association with 'mpg' conditional on the other 
+# predictors in the model:
+
+# cylinders: p-value < 2.2e-16<0.05, reject the null hypothesis
+# displacement: p-value < 2.2e-16<0.05, reject the null hypothesis
+# horsepower: p-value = 4.25e-16<0.05, reject the null hypothesis
+# weight: p-value < 2.2e-16<0.05, reject the null hypothesis
+# acceleration: p-value = 0.3315>0.05, fail to reject the null hypothesis
+# year: p-value < 2.2e-16<0.05, reject the null hypothesis
+# origin: p-value = 1.73e-05<0.05, reject the null hypothesis
+```
+
+```{r}
+# Q1(c) To predict the mpg with given specifications, we use predict() function.
+
+# Create a new data frame with the desired values for each predictor:
+Japanese_car <- data.frame(
+  name = factor("Jpcar", levels = levels(Autod$name)),
+  cylinders = factor(3, levels = levels(Autod$cylinders)),
+  displacement = 100,
+  horsepower = 85,
+  weight = 3000,
+  acceleration = 20,
+  year = factor(80, levels = levels(Autod$year)),
+  origin = factor(3, levels = levels(Autod$origin))
+)
+
+# Then, use the predict() function with the fitted MLR model
+predicted_mpg <- predict(lmod, newdata = Japanese_car)
+
+# Print the predicted mpg
+show(predicted_mpg)
+```
+
+```{r}
+# Q1(d) We may extract the coefficients from the fitted MLR model, 
+# and compute the difference
+diff_origin <- coef(lmod)["origin3"] - coef(lmod)["origin2"]
+
+# Print the difference between Japanese cars and Eurepean cars.
+show(diff_origin)
+```
+
+```{r}
+# Q1(e) To fit a model to predict mpg using origin, horsepower, 
+# and their interaction
+interaction_model <- lm(mpg ~ origin * horsepower, data = Autod)
+
+# Print the summary of the interaction_model
+summary(interaction_model)
+
+# Based on the summary output of the fitted model, the fitted linear model 
+# using origin, horsepower, and their interaction can be written as:
+# mpg = 34.4765 + 10.9972 * origin2 + 14.3397 * origin3 - 0.1213 * horsepower 
+#      - 0.1005 * (origin2 * horsepower) - 0.1087 * (origin3 * horsepower) 
+#      + $\epsilon$
+# Here, the variables are:
+# mpg: miles per gallon
+# origin2: 1 if the car is European, 0 otherwise
+# origin3: 1 if the car is Japanese, 0 otherwise
+# horsepower: engine horsepower
+# $\epsilon$: random error term
+```
+
+```{r}
+# Q1(f) use the Akaike Information Criterion (AIC) to compare different degrees 
+# of polynomial regression models and choose the one with the lowest AIC value.
+
+# Maximum polynomial degree to test
+max_degree <- 5
+
+# Create an empty vector to store AIC values
+aic_values <- numeric(max_degree)
+
+# Loop through different polynomial degrees and fit models
+for (degree in 1:max_degree) {
+  poly_model <- lm(mpg ~ poly(weight, degree, raw = TRUE), data = Autod)
+  aic_values[degree] <- AIC(poly_model)
+}
+
+# Find the degree with the lowest AIC value
+best_degree <- which.min(aic_values)
+
+# Print the AIC values and the best degree
+print(aic_values)
+print(best_degree)
+# From the outcome above, we know 2nd degree is a proper degree of polynomial,
+# because it has the lowest AIC value.
+```
+
+```{r}
+# Q1(g) Load the MASS package for further use.
+library(MASS)
+
+# Full model with all predictors (except name)
+full_model <- lm(mpg ~ . - name, data = Autod)
+
+# Perform a backward selection using 'stepAIC()' function
+best_model <- stepAIC(full_model, direction = "backward")
+
+# Print the summary of the best model
+summary(best_model)
+
+# From the output of the summary above, the best model selected by the stepAIC()
+# function includes the following predictor variables: cylinders, displacement, 
+# horsepower, weight, year, and origin. The model has an adjusted R-squared 
+# value of 0.8673, which indicates a good fit. The AIC value for this model 
+# is 840.72, lower than the full model with all predictors, suggesting that 
+# it is a better model according to the AIC criterion.
+```
+
+```{r}
+# Q2(a) load the fat dataset:
+library(faraway)
+data(fat)
+
+# remove every tenth observation for use as a test sample. 
+test_sample <- fat[seq(10, nrow(fat), by=10),]
+
+# The remaining data will be used as a training sample for futher use:
+training_sample <- fat[-seq(10, nrow(fat), by=10),]
+
+# fit a linear regression model with all predictors, 
+# excluding "brozek" and "density", using the training data:
+training_model <- lm(siri ~ . - brozek - density, data=training_sample)
+
+summary(training_model)
+```
+```{r}
+# Q2(b)
+library(MASS)
+
+# Scale all predictors, excluding 'siri', 'brozek', and 'density'
+training_sample_scaled <- scale(training_sample[ , !(colnames(training_sample) 
+                                %in% c("siri", "brozek", "density"))], 
+                                center = TRUE, scale = TRUE)
+training_sample_scaled <- as.data.frame(training_sample_scaled)
+
+# Add 'siri' back
+training_sample_scaled$siri <- training_sample$siri
+
+# Use 'lm.ridge()' function to fit a ridge regreassion model
+rgmod <- lm.ridge(siri ~ ., data = training_sample_scaled, 
+                lambda = seq(0, 100, length.out = 100))
+
+matplot(rgmod$lambda, coef(rgmod), type="l", xlab = "lambda", ylab = "Beta hat"
+        , cex=0.8)
+```
+

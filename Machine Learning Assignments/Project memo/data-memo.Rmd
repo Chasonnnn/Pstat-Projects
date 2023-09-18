@@ -1,0 +1,71 @@
+---
+title: "data-memo"
+author: "Haocheng Zhang"
+date: "2023-08-20"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+# Read the CSV file into a dataframe
+real_estate_data = read.csv('RealEstate_California.csv')
+
+# View the first few rows of the dataframe
+head(real_estate_data)
+```
+
+
+## Overview of the Dataset
+
+### What does it include?
+- The dataset includes information about real estate listings in California,
+such as property details, price, area, number of bedrooms, type of property,
+and more.
+
+### Where and how will you be obtaining it?
+- [Kaggle: Real Estate California](https://www.kaggle.com/datasets/yellowj4acket/real-estate-california)
+
+### About how many observations? How many predictors?
+- Observations (rows): 35,389
+- Predictors (columns): 39
+
+### What types of variables will you be working with?
+- Numerical variables: price, living area, bathrooms
+- Categorical variables: city, state, home type
+- Binary variables: hasGarage, isNewConstruction
+
+### Is there any missing data? About how much? Do you have an idea for how to handle it?
+- datePostedString: 3 missing values
+- time: 289 missing values
+- zip-code: 25 missing values (planning to delete these)
+- description: 279 missing values
+- And i am planning to delete those without zip-code, because it is essential. Also, deleting those 25 data would not impact too much on assurance.
+
+## Overview of Your Research Questions
+
+### What variable(s) are you interested in predicting? What question(s) are you interested in answering?
+- I could focus on predicting property prices, depending on different areas and property types.
+
+### Will these questions be best answered with a classification or regression approach?
+- Price prediction would typically be a regression problem, while classifying property types would be a classification problem.
+
+### Which predictors do you think will be especially useful?
+- Features like living area, bedrooms, bathrooms, location, and property type may be particularly useful.
+
+### Is the goal of your model descriptive, predictive, inferential, or a combination? Explain.
+- The primary goal of my model is predictive since I aim to forecast property prices using various features like location (area) and property type.
+
+## Proposed Project Timeline
+- Week2: data loading
+- Week3: exploratory data analysis
+- week4-5: model building, evaluation,
+- week6: finalization.
+
+## Any Questions or Concerns
+- I am worried that if I should find another dataset for real estate sales in a specific time range, such as 2020-2021, so I can see the trend for price change, which should be helpful to predict future prices. However, the current dataset already includes useful information, such as price, property types, zip-code, which should be already enough for my research.
